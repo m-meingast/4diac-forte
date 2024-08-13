@@ -66,6 +66,7 @@ if (FORTE_COM_OPC_UA)
     # OPC UA Event Layer
     forte_add_network_layer(OPC_UA_Events ON "ua_ev" COPC_UA_Event_Layer opcua_event_layer "Enable OPC UA Event Support")
     forte_add_network_layer(OPC_UA_AC ON "ua_ac" COPC_UA_AC_Layer opcua_ac_layer "Enable OPC UA A&C Support")
+    forte_add_network_layer(OPC_UA_Prosys ON "prosys" COPC_UA_Prosys_Layer opcua_prosys_layer "Enable OPC UA Prosys Simulation Layer")
     forte_add_sourcefile_hcpp(opcua_layer opcua_local_handler opcua_helper opcua_remote_handler opcua_handler_abstract opcua_client_information opcua_action_info opcua_objectstruct_helper 
         opcua_event_layer opcua_ac_layer opcua_client_config_parser)
     if (NOT EXISTS ${FORTE_COM_OPC_UA_INCLUDE_DIR})
