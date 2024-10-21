@@ -14,7 +14,7 @@
 #include <forte_printer.h>
 #include <devlog.h>
 #include <parameterParser.h>
-#include <map>
+#include <unordered_map>
 
 //we tried to use the logLevelNames and logCategoryNames as extern from open62541 but it failed when using with shared libray
 const std::unordered_map<size_t, const char*> LogLevelNames {
