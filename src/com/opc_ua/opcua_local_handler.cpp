@@ -88,7 +88,7 @@ void COPC_UA_Local_Handler::run() {
 
     UA_ServerStrings serverStrings;
     generateServerStrings(gOpcuaServerPort, serverStrings);
-    configureUAServer(serverStrings, *uaServerConfig, gOpcuaServerPort);
+    configureUAServer(serverStrings, *uaServerConfig);
 
     if(initializeNodesets(*mUaServer)) {
 #ifdef FORTE_COM_OPC_UA_MULTICAST
@@ -151,18 +151,20 @@ void COPC_UA_Local_Handler::generateServerStrings(TForteUInt16 paUAServerPort, U
 #endif //FORTE_COM_OPC_UA_MULTICAST
 
   paServerStrings.mAppURI = "org.eclipse.4diac."s;
+  paServerStrings.mHostname = std::string("opc.tcp://");
 #ifdef FORTE_COM_OPC_UA_CUSTOM_HOSTNAME
-  paServerStrings.mHostname = std::string(FORTE_COM_OPC_UA_CUSTOM_HOSTNAME);
+  paServerStrings.mHostname.append(FORTE_COM_OPC_UA_CUSTOM_HOSTNAME);
   paServerStrings.mHostname.append("-"s);
   paServerStrings.mHostname.append(helperBuffer);
   paServerStrings.mAppURI.append(paServerStrings.mHostname);
 #else
   paServerStrings.mAppURI.append(helperBuffer);
 #endif
-
+  paServerStrings.mHostname.append(":");
+  paServerStrings.mHostname.append(std::to_string(paUAServerPort));
 }
 
-void COPC_UA_Local_Handler::configureUAServer(UA_ServerStrings &paServerStrings, UA_ServerConfig &paUaServerConfig, UA_UInt16 paServerPort) const {
+void COPC_UA_Local_Handler::configureUAServer(UA_ServerStrings &paServerStrings, UA_ServerConfig &paUaServerConfig) const {
 #ifdef FORTE_COM_OPC_UA_MULTICAST
   paUaServerConfig.applicationDescription.applicationType = UA_APPLICATIONTYPE_DISCOVERYSERVER;
   // hostname will be added by mdns library
@@ -176,13 +178,7 @@ void COPC_UA_Local_Handler::configureUAServer(UA_ServerStrings &paServerStrings,
 
   UA_String serverUrls[1];
   size_t serverUrlsSize = 0;
-  char serverUrlBuffer[512];
-#ifdef FORTE_COM_OPC_UA_CUSTOM_HOSTNAME
-  snprintf(serverUrlBuffer, sizeof(serverUrlBuffer), "opc.tcp://%s:%u", FORTE_COM_OPC_UA_CUSTOM_HOSTNAME, paServerPort);
-#else
-  snprintf(serverUrlBuffer, sizeof(serverUrlBuffer), "opc.tcp://:%u", paServerPort);
-#endif
-  serverUrls[serverUrlsSize] = UA_STRING(serverUrlBuffer);
+  serverUrls[serverUrlsSize] = UA_STRING(&paServerStrings.mHostname[0]);
   serverUrlsSize++;
   UA_StatusCode retVal = UA_Array_copy(serverUrls, serverUrlsSize, (void**)&paUaServerConfig.serverUrls, &UA_TYPES[UA_TYPES_STRING]);
   if(retVal != UA_STATUSCODE_GOOD) {
