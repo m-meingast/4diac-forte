@@ -137,8 +137,7 @@ bool COPC_UA_ObjectStruct_Helper::addOPCUAStructTypeComponent(UA_Server *paServe
     std::string memberBrowsePathStr = getMemberBrowsePath(paStructName, structMemberName);
     char* memberBrowsePath = new char[memberBrowsePathStr.length() +1];
     strncpy(memberBrowsePath, memberBrowsePathStr.c_str(), memberBrowsePathStr.length());
-    memberBrowsePath[memberBrowsePathStr.length()] = '\0';   
-    mStructTypeNames.push_back(memberBrowsePath);
+    memberBrowsePath[memberBrowsePathStr.length()] = '\0';
     memberNodeId = UA_NODEID_STRING(mOpcuaTypeNamespaceIndex, memberBrowsePath);
   } else {
     memberNodeId = UA_NODEID_NUMERIC(mOpcuaTypeNamespaceIndex, 0);
