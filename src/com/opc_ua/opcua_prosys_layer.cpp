@@ -475,6 +475,9 @@ EComResponse COPC_UA_Prosys_Layer::addOPCUATypeProperties(UA_Server *paServer, c
   } else {
     DEVLOG_ERROR("[OPC UA A&C LAYER]: Wrong mode specified for FB %s, Mode: %s\n", getCommFB()->getInstanceName(), paMode.c_str());
   }
+  if(eRetVal == e_InitOk) {
+    eRetVal = addOPCUATypeEnableStateProperty(paServer);
+  }
   return eRetVal;
 }
 
@@ -509,6 +512,26 @@ forte::com_infra::EComResponse COPC_UA_Prosys_Layer::addOPCUATypeUSERProperties(
       DEVLOG_ERROR("[OPC UA A&C LAYER]: Failed to add OPCUA MSG Property for FB %s, Port: %s, Status: %s\n", getCommFB()->getInstanceName(), propertyName, UA_StatusCode_name(status));
       return e_InitTerminated;
     }
+  }
+  return e_InitOk;
+}
+
+forte::com_infra::EComResponse COPC_UA_Prosys_Layer::addOPCUATypeEnableStateProperty(UA_Server *paServer) {
+  UA_VariableAttributes vAttr = UA_VariableAttributes_default;
+    vAttr.displayName = UA_LOCALIZEDTEXT(smEmptyString, "EnableState");
+    vAttr.valueRank = UA_VALUERANK_ANY;
+    vAttr.accessLevel = UA_ACCESSLEVELMASK_READ | UA_ACCESSLEVELMASK_WRITE;
+    vAttr.dataType = UA_TYPES[UA_TYPES_LOCALIZEDTEXT].typeId;
+
+  UA_NodeId memberNodeId;
+  UA_StatusCode status = UA_Server_addVariableNode(paServer, UA_NODEID_NULL, mTypeNodeId,
+                          UA_NODEID_NUMERIC(0, UA_NS0ID_HASCOMPONENT),
+                          UA_QUALIFIEDNAME(0, "EnableState"),    // TODO Change 1 to namespaceIndex
+                          UA_NODEID_NUMERIC(0, UA_NS0ID_TWOSTATEVARIABLETYPE), vAttr, nullptr, &memberNodeId);
+  mTypePropertyNodes.emplace_back(memberNodeId);
+  if(status != UA_STATUSCODE_GOOD) {
+    DEVLOG_ERROR("[OPC UA A&C LAYER]: Failed to add OPCUA EnableState Property for FB %s, Status: %s\n", getCommFB()->getInstanceName(), UA_StatusCode_name(status));
+    return e_InitTerminated;
   }
   return e_InitOk;
 }

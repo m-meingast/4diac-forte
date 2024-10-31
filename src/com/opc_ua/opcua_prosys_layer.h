@@ -137,6 +137,8 @@ class COPC_UA_Prosys_Layer : public COPC_UA_Layer {
 
     forte::com_infra::EComResponse addOPCUATypeUSERProperties(UA_Server *paServer, const std::string &paParentTypeName, bool paIsPublisher);
 
+    forte::com_infra::EComResponse addOPCUATypeEnableStateProperty(UA_Server *paServer);
+
     UA_StatusCode addVariableNode(UA_Server *paServer, const std::string &paParentTypeName, char *paVariableName, CIEC_ANY &paVariableType);
 
     forte::com_infra::EComResponse initializeMemberActions(const std::string &paParentBrowsePath);
