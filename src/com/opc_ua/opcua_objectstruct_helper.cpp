@@ -260,8 +260,17 @@ CIEC_ANY const *COPC_UA_ObjectStruct_Helper::getStructMember(CActionInfo &paActi
 }
 
 forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::executeStructAction() {
-  for(std::shared_ptr<CActionInfo> actionInfo : mStructMemberActionInfos) {
-    if(UA_STATUSCODE_GOOD != mHandler->executeAction(*actionInfo)) {
+  COPC_UA_Local_Handler* localHandler = static_cast<COPC_UA_Local_Handler*>(mHandler);
+  if(!localHandler) {
+    DEVLOG_ERROR("[OPC UA OBJECT STRUCT HELPER]: Failed to get LocalHandler because LocalHandler is null!\n");
+    return e_InitTerminated;
+  }
+  CIEC_ANY** apoDataPorts = mLayer.getCommFB()->getSDs();
+  CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(apoDataPorts[0]->unwrap());
+  for(size_t i = 0; i < mStructMemberActionInfos.size(); i++) {
+    std::shared_ptr<CActionInfo> actionInfo = mStructMemberActionInfos[i];
+    CIEC_ANY *member = structType.getMember(i);
+    if(localHandler->executeStructAction(*actionInfo, *member) != UA_STATUSCODE_GOOD) {
       return e_ProcessDataSendFailed;
     }
   }

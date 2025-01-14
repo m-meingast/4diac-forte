@@ -30,6 +30,7 @@
 #include "forte_printer.h"
 #include "../../arch/utils/mainparam_utils.h"
 #include "opcua_local_handler.h"
+#include "struct_action_info.h"
 #ifdef FORTE_COM_OPC_UA_MULTICAST
 #include "detail/lds_me_handler.h"
 #endif //FORTE_COM_OPC_UA_MULTICAST
@@ -353,6 +354,24 @@ UA_StatusCode COPC_UA_Local_Handler::executeAction(CActionInfo &paActionInfo) {
       break;
     default: //eCallMethod, eSubscribe will never reach here since they weren't initialized. eRead is a Subscribe FB
       DEVLOG_ERROR("[OPC UA LOCAL]: Action %d to be executed is unknown or invalid\n", paActionInfo.getAction());
+      break;
+  }
+
+  mServerNeedsIteration.inc();
+
+  return retVal;
+}
+
+UA_StatusCode COPC_UA_Local_Handler::executeStructAction(CActionInfo &paActionInfo, CIEC_ANY &paMember) {
+  UA_StatusCode retVal = UA_STATUSCODE_BADINTERNALERROR;
+
+  CCriticalRegion criticalRegion(mServerAccessMutex);
+  switch(paActionInfo.getAction()){
+    case CActionInfo::eWrite:
+      retVal = executeStructWrite(paActionInfo, paMember);
+      break;
+    default: //eCallMethod, eSubscribe will never reach here since they weren't initialized. eRead is a Subscribe FB
+      DEVLOG_ERROR("[OPC UA LOCAL]: Struct Action %d to be executed is unknown or invalid\n", paActionInfo.getAction());
       break;
   }
 
@@ -867,6 +886,34 @@ UA_StatusCode COPC_UA_Local_Handler::executeWrite(CActionInfo &paActionInfo) {
       break;
     }
 
+  }
+  return retVal;
+}
+
+UA_StatusCode COPC_UA_Local_Handler::executeStructWrite(CActionInfo &paActionInfo, CIEC_ANY &paMember) {
+  UA_StatusCode retVal = UA_STATUSCODE_GOOD;
+
+  if(paMember.getDataTypeID() == CIEC_ANY::e_STRUCT) {
+    CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(paMember);
+    CStructActionInfo &structActionInfo = static_cast<CStructActionInfo&>(paActionInfo);
+    std::vector<std::shared_ptr<CActionInfo>> memberActionInfos = structActionInfo.getMemberActionInfos();
+    for(size_t i = 0; i < memberActionInfos.size(); i++) {
+      std::shared_ptr<CActionInfo> memberActionInfo = memberActionInfos[i];
+      CIEC_ANY *member = structType.getMember(i);
+      retVal = executeStructWrite(*memberActionInfo, *member);
+      if(retVal != UA_STATUSCODE_GOOD) {
+        return retVal;
+      }
+    }
+  } else {
+    auto it = paActionInfo.getNodePairInfo().begin();
+    retVal = updateNodeValue(*it->getNodeId(), &paMember);
+    if(UA_STATUSCODE_GOOD != retVal) {   
+      DEVLOG_ERROR("[OPC UA LOCAL]: Could not convert value to write for node %s at FB %s. Error: %s\n",
+        (*paActionInfo.getNodePairInfo().begin()).getBrowsePath(),
+        paActionInfo.getLayer().getCommFB()->getInstanceName(), UA_StatusCode_name(retVal));
+      return retVal;
+    }
   }
   return retVal;
 }
