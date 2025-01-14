@@ -16,6 +16,7 @@
 #include "opcua_objectstruct_helper_gen.cpp"
 #endif
 #include "opcua_layer.h"
+#include "struct_member_action_info.h"
 #include "struct_action_info.h"
 #include "../../core/cominfra/basecommfb.h"
 #include "opcua_local_handler.h"
@@ -223,6 +224,10 @@ bool COPC_UA_ObjectStruct_Helper::addOPCUAStructTypeObjectComponent(UA_Server *p
 }
 
 forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::createObjectNode(CActionInfo& paActionInfo, CIEC_STRUCT &paStructType) {
+  return createObjectNode(paActionInfo, paStructType, mStructMemberActionInfos);
+}
+
+forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::createObjectNode(CActionInfo& paActionInfo, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos) {
   std::string browsePath = paActionInfo.getNodePairInfo().begin()->getBrowsePath();
   CActionInfo::CNodePairInfo nodePair(nullptr, browsePath);
   if(!isOPCUAObjectPresent(nodePair)) {
@@ -236,7 +241,7 @@ forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::createObjectNode(CAc
       mOpcuaObjectNamespaceIndex = paActionInfo.getNodePairInfo().begin()->getNodeId()->namespaceIndex;
     }
   }
-  return initializeMemberAction(paActionInfo, browsePath, paStructType);
+  return initializeMemberAction(paActionInfo, browsePath, paStructType, paMemberActionInfos);
 }
 
 CIEC_ANY const *COPC_UA_ObjectStruct_Helper::getStructMember(CActionInfo &paActionInfo, bool paIsSD) {
@@ -322,7 +327,7 @@ std::shared_ptr<CActionInfo> COPC_UA_ObjectStruct_Helper::getCreateObjectActionI
   return actionInfo;
 }
 
-forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::initializeMemberAction(CActionInfo& paActionInfo, std::string &paBrowsePath, CIEC_STRUCT &paStructType) {
+forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::initializeMemberAction(CActionInfo& paActionInfo, std::string &paBrowsePath, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos) {
   COPC_UA_Local_Handler* localHandler = static_cast<COPC_UA_Local_Handler*>(mHandler);
   if(!localHandler) {
     DEVLOG_ERROR("[OPC UA OBJECT STRUCT HELPER]: Failed to get LocalHandler because LocalHandler is null!\n");
@@ -333,28 +338,33 @@ forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::initializeMemberActi
 
   for(size_t i = 0; i < paStructType.getStructSize(); i++) {
     std::string memberBrowsePath(getStructMemberBrowsePathWithNSIndex(paBrowsePath, structMemberNames[i]));
-    std::shared_ptr<CActionInfo> actionInfo = std::make_shared<CStructMemberActionInfo>(*this, mLayer, paActionInfo.getAction(), paActionInfo.getEndpoint());
     CIEC_ANY* memberVariable = paStructType.getMember(i);
     
     if(memberVariable->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+      CIEC_STRUCT &objectStruct = static_cast<CIEC_STRUCT&>(memberVariable->unwrap());
+      std::shared_ptr<CStructActionInfo> actionInfo = std::make_shared<CStructActionInfo>(*this, mLayer, paActionInfo.getAction(), paActionInfo.getEndpoint());
       actionInfo->getNodePairInfo().emplace_back(nullptr, memberBrowsePath);
-      if(createObjectNode(*actionInfo, static_cast<CIEC_STRUCT&>(memberVariable->unwrap())) != e_InitOk) {
+      std::vector<std::shared_ptr<CActionInfo>> newActionInfos;
+      if(createObjectNode(*actionInfo, objectStruct, newActionInfos) != e_InitOk) {
         DEVLOG_ERROR("[OPC UA OBJECT STRUCT HELPER]: Error occured in FB %s while initializing Struct Object member %s of Struct Type %s\n", mLayer.getCommFB()->getInstanceName(),
         CStringDictionary::getInstance().get(structMemberNames[i]), CStringDictionary::getInstance().get(paStructType.getTypeNameID()));
         return e_InitTerminated;
       }
+      actionInfo->addMemberActionInfos(newActionInfos);
+      paMemberActionInfos.emplace_back(std::move(actionInfo));
     } else {
       UA_NodeId* nodeId = nullptr;
       if(!isNodeIdPresent) {    
         nodeId = createStringNodeIdFromBrowsepath(memberBrowsePath);
       }
+      std::shared_ptr<CActionInfo> actionInfo = std::make_shared<CStructMemberActionInfo>(*this, mLayer, paActionInfo.getAction(), paActionInfo.getEndpoint());
       actionInfo->getNodePairInfo().emplace_back(nodeId, memberBrowsePath);
       if(UA_STATUSCODE_GOOD != localHandler->initializeActionForObjectStruct(actionInfo, *memberVariable)) {
         DEVLOG_ERROR("[OPC UA OBJECT STRUCT HELPER]: Error occured in FB %s while initializing Struct Variable member %s of Struct Type %s\n", mLayer.getCommFB()->getInstanceName(),
         CStringDictionary::getInstance().get(structMemberNames[i]), CStringDictionary::getInstance().get(paStructType.getTypeNameID()));
         return e_InitTerminated;
       }
-      mStructMemberActionInfos.push_back(std::move(actionInfo));
+      paMemberActionInfos.emplace_back(std::move(actionInfo));
     }
   }
   return e_InitOk;
