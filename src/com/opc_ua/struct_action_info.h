@@ -28,6 +28,10 @@ class CStructActionInfo : public CStructMemberActionInfo {
       mStructMemberActionInfos.insert(mStructMemberActionInfos.end(), paActionInfos.begin(), paActionInfos.end());
     }
 
+    std::vector<std::shared_ptr<CActionInfo>> &getMemberActionInfos() {
+      return mStructMemberActionInfos;
+    }
+
   private:
 
   std::vector<std::shared_ptr<CActionInfo>> mStructMemberActionInfos;
