@@ -194,13 +194,23 @@ class COPC_UA_ObjectStruct_Helper {
     bool createOPCUAStructType(CActionInfo &paActionInfo, UA_NodeId &paTypeNodeId, const std::string &paStructTypeName, CIEC_STRUCT &paStructType);
 
     /**
+     * Create an OPC UA Object Node from Struct Type, if it is not present
+     * @param paActionInfo The ActionInfo to create the Object Node from
+     * @param paStructType The Struct Type
+     * @param paMemberActionInfos The vector in which the ActionInfos of the members should be added. If no vector is provided, the default vector is used.
+     * @return e_InitOk if Object Node was created successfully, e_InitTerminated otherwise
+    */
+    forte::com_infra::EComResponse createObjectNode(CActionInfo& paActionInfo, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos);
+
+    /**
      * Perform initialization for Object Struct Members
      * @param paActionInfo The ActionInfo to create the Object Node from
      * @param paBrowsePath The browsepath to the Object Struct
      * @param paStructType The Struct Type
+     * @param paMemberActionInfos The vector in which the ActionInfos of the members should be added.
      * @return e_InitOk if initialization was successful, e_InitTerminated otherwise
      */
-    forte::com_infra::EComResponse initializeMemberAction(CActionInfo& paActionInfo, std::string &paBrowsePath, CIEC_STRUCT &paStructType);
+    forte::com_infra::EComResponse initializeMemberAction(CActionInfo& paActionInfo, std::string &paBrowsePath, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos);
     
     /**
      * Check if OPC UA namespace is given by the Resource configuration. 
