@@ -18,7 +18,6 @@
 #include "resource.h"
 
 #include "device.h"
-#include "../../stdfblib/ita/DEV_MGR.h"
 
 DEFINE_FIRMWARE_FB(FORTE_EC_STOP_ELEM, g_nStringIdEC_STOP_ELEM)
 
@@ -88,7 +87,7 @@ void FORTE_EC_STOP_ELEM::executeRQST(){
 
   //calculate return value
   var_QO = CIEC_BOOL(resp == EMGMResponse::Ready);
-  const std::string retVal(DEV_MGR::getResponseText(resp));
+  const std::string retVal(forte::mgm_cmd::getResponseText(resp));
   DEVLOG_DEBUG("%s\n", retVal.c_str());
   var_STATUS = CIEC_WSTRING(retVal.c_str());
 }

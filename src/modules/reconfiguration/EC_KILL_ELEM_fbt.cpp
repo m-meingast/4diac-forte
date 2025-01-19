@@ -17,7 +17,6 @@
 #include "criticalregion.h"
 #include "resource.h"
 
-#include "../../stdfblib/ita/DEV_MGR.h"
 #include "device.h"
 
 DEFINE_FIRMWARE_FB(FORTE_EC_KILL_ELEM, g_nStringIdEC_KILL_ELEM)
@@ -88,7 +87,7 @@ void FORTE_EC_KILL_ELEM::executeRQST(){
 
   //calculate return value
   var_QO = CIEC_BOOL(resp == EMGMResponse::Ready);
-  const std::string retVal(DEV_MGR::getResponseText(resp));
+  const std::string retVal(forte::mgm_cmd::getResponseText(resp));
   DEVLOG_DEBUG("%s\n", retVal.c_str());
   var_STATUS = CIEC_WSTRING(retVal.c_str());
 }

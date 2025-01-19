@@ -18,7 +18,6 @@
 #include "resource.h"
 
 #include "device.h"
-#include "../../stdfblib/ita/DEV_MGR.h"
 
 DEFINE_FIRMWARE_FB(FORTE_ST_CREATE_CONN, g_nStringIdST_CREATE_CONN)
 
@@ -97,7 +96,7 @@ void FORTE_ST_CREATE_CONN::executeRQST(){
 
   //calculate return value
   var_QO = CIEC_BOOL(resp == EMGMResponse::Ready);
-  const std::string retVal(DEV_MGR::getResponseText(resp));
+  const std::string retVal(forte::mgm_cmd::getResponseText(resp));
   DEVLOG_DEBUG("%s\n", retVal.c_str());
   var_STATUS = CIEC_WSTRING(retVal.c_str());
 }
