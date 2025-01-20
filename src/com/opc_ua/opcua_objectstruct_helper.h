@@ -80,7 +80,16 @@ class COPC_UA_ObjectStruct_Helper {
      * @param paRDs      the array of data pointers to be sent
      * @param paRDBuffer The buffer for the data
     */
-    static void setMemberValues(CIEC_ANY** paRDs, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer);
+    static void setMemberValues(CIEC_STRUCT &paStructType, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer);
+
+    /**
+     * Set values of Object Struct members from the RDBuffer
+     *
+     * @param paRDs      the array of data pointers to be sent
+     * @param paRDBuffer The buffer for the data
+     * @param paOverallIndex The overall index, which is needed in case of nested Structs
+    */
+    static void setMemberValues(CIEC_STRUCT &paStructType, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer, size_t &paOverallIndex);
 
     /**
      * Initialize RDBuffer for Object Structs
