@@ -159,8 +159,9 @@ EComResponse COPC_UA_Layer::sendData(void *, unsigned int) {
 
 EComResponse COPC_UA_Layer::processInterrupt() {
   CCriticalRegion criticalRegion(mRDBufferMutex);
-  if(mIsObjectNodeStruct) { 
-    COPC_UA_ObjectStruct_Helper::setMemberValues(getCommFB()->getRDs(), mRDBuffer);
+  if(mIsObjectNodeStruct) {
+    CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(getCommFB()->getRDs()[0]->unwrap());
+    COPC_UA_ObjectStruct_Helper::setMemberValues(structType, mRDBuffer);
   } else {
     for(size_t i = 0; i < getCommFB()->getNumRD(); ++i) {
       getCommFB()->getRDs()[i]->setValue(*mRDBuffer[i]);

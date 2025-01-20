@@ -307,10 +307,20 @@ int COPC_UA_ObjectStruct_Helper::getRDBufferIndexFromNodeId(const UA_NodeId *paN
   return -1;
 }
 
-void COPC_UA_ObjectStruct_Helper::setMemberValues(CIEC_ANY** paRDs, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer) {
-  CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(paRDs[0]->unwrap());
-  for(size_t i = 0; i < structType.getStructSize(); i++) {
-    structType.getMember(i)->setValue(*paRDBuffer[i]);
+void COPC_UA_ObjectStruct_Helper::setMemberValues(CIEC_STRUCT &paStructType, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer) {
+  size_t overallIndex = 0;
+  setMemberValues(paStructType, paRDBuffer, overallIndex);
+}
+
+void COPC_UA_ObjectStruct_Helper::setMemberValues(CIEC_STRUCT &paStructType, const std::vector<std::unique_ptr<CIEC_ANY>>& paRDBuffer, size_t &paOverallIndex) {
+  for(size_t i = 0; i < paStructType.getStructSize(); i++) {
+    CIEC_ANY *member = paStructType.getMember(i);
+    if(member->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+      CIEC_STRUCT &memberStruct = static_cast<CIEC_STRUCT&>(member->unwrap());
+      setMemberValues(memberStruct, paRDBuffer, paOverallIndex);
+    } else {
+      member->setValue(*paRDBuffer[paOverallIndex++]);
+    }
   }
 }
 
