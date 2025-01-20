@@ -84,9 +84,10 @@ class COPC_UA_ObjectStruct_Helper {
 
     /**
      * Initialize RDBuffer for Object Structs
+     * @param paStructType The Struct Type
      * @return The initialized buffer
     */
-    std::vector<std::unique_ptr<CIEC_ANY>> initializeRDBuffer();
+    std::vector<std::unique_ptr<CIEC_ANY>> initializeRDBuffer(CIEC_STRUCT &paStructType);
 
     /**
      * Delete all entries of the RDBuffer

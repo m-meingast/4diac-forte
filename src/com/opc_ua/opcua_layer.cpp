@@ -74,7 +74,7 @@ EComResponse COPC_UA_Layer::openConnection(char *paLayerParameter) {
         response = mStructObjectHelper->createObjectNode(*mActionInfo, structType);
         if(!isPublisher && (response == e_InitOk)) {
           CCriticalRegion criticalRegion(mRDBufferMutex);
-          mRDBuffer = mStructObjectHelper->initializeRDBuffer();
+          mRDBuffer = mStructObjectHelper->initializeRDBuffer(structType);
         }
       }
     }   
