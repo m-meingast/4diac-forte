@@ -198,7 +198,7 @@ class COPC_UA_ObjectStruct_Helper {
      * Create an OPC UA Object Node from Struct Type, if it is not present
      * @param paActionInfo The ActionInfo to create the Object Node from
      * @param paStructType The Struct Type
-     * @param paMemberActionInfos The vector in which the ActionInfos of the members should be added. If no vector is provided, the default vector is used.
+     * @param paMemberActionInfos The vector in which the ActionInfos of the members should be added. If no vector is provided, the default vector is used
      * @return e_InitOk if Object Node was created successfully, e_InitTerminated otherwise
     */
     forte::com_infra::EComResponse createObjectNode(CActionInfo& paActionInfo, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos);
@@ -213,6 +213,16 @@ class COPC_UA_ObjectStruct_Helper {
      */
     forte::com_infra::EComResponse initializeMemberAction(CActionInfo& paActionInfo, std::string &paBrowsePath, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos);
     
+    /**
+     * Get index to the corresponding Object Struct RDBuffer entry from the Node ID
+     * @param paNodeId The Node ID
+     * @param paStructType The Struct Type
+     * @param paMemberActionInfos The vector in which the ActionInfos of the members are stored. If no vector is provided, the default vector is used
+     * @param paOverallIndex The overall index, which is needed in case of nested Structs
+     * @return The index to the corresponding RDBuffer entry
+    */
+    int getRDBufferIndexFromNodeId(const UA_NodeId *paNodeId, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos, int &paOverallIndex);
+
     /**
      * Check if OPC UA namespace is given by the Resource configuration. 
      * If the configuration is set, change the namespace index. 

@@ -278,11 +278,30 @@ forte::com_infra::EComResponse COPC_UA_ObjectStruct_Helper::executeStructAction(
 }
 
 int COPC_UA_ObjectStruct_Helper::getRDBufferIndexFromNodeId(const UA_NodeId *paNodeId) {
-  for(size_t i = 0; i < mStructMemberActionInfos.size(); i++) {
-    std::shared_ptr<CActionInfo> actionInfo = mStructMemberActionInfos[i];
-    auto *nodeId = actionInfo->getNodePairInfo().begin()->getNodeId();
-    if(UA_NodeId_equal(nodeId, paNodeId)) {
-      return (int)i;
+  CIEC_ANY** apoDataPorts = mLayer.getCommFB()->getRDs();
+  CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(apoDataPorts[0]->unwrap());
+  int initialIndex = 0;
+  return getRDBufferIndexFromNodeId(paNodeId, structType, mStructMemberActionInfos, initialIndex);
+}
+
+int COPC_UA_ObjectStruct_Helper::getRDBufferIndexFromNodeId(const UA_NodeId *paNodeId, CIEC_STRUCT &paStructType, std::vector<std::shared_ptr<CActionInfo>> &paMemberActionInfos, int &paOverallIndex) {
+  for(size_t i = 0; i < paMemberActionInfos.size(); i++) {
+    std::shared_ptr<CActionInfo> actionInfo = paMemberActionInfos[i];
+    CIEC_ANY *member = paStructType.getMember(i);
+    if(member->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+      CIEC_STRUCT& memberStruct = static_cast<CIEC_STRUCT&>(member->unwrap());
+      CStructActionInfo &structActionInfo = static_cast<CStructActionInfo&>(*actionInfo);
+      int index = getRDBufferIndexFromNodeId(paNodeId, memberStruct, structActionInfo.getMemberActionInfos(), paOverallIndex);
+      
+      if(index != -1) {
+        return paOverallIndex;
+      }
+    } else {
+      auto *nodeId = actionInfo->getNodePairInfo().begin()->getNodeId();
+      if(UA_NodeId_equal(nodeId, paNodeId)) {
+        return (int)i;
+      }
+      paOverallIndex++;
     }
   }
   return -1;
