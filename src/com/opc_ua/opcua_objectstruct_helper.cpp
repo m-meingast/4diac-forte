@@ -295,13 +295,20 @@ void COPC_UA_ObjectStruct_Helper::setMemberValues(CIEC_ANY** paRDs, const std::v
   }
 }
 
-std::vector<std::unique_ptr<CIEC_ANY>> COPC_UA_ObjectStruct_Helper::initializeRDBuffer() {
-  CIEC_ANY** rds = mLayer.getCommFB()->getRDs();
-  CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(rds[0]->unwrap());
-  const size_t structSize = structType.getStructSize();
-  std::vector<std::unique_ptr<CIEC_ANY>> RDBuffer;;
-  for(size_t i = 0; i < structSize; i++) {
-    RDBuffer.emplace_back(structType.getMember(i)->clone(nullptr));
+std::vector<std::unique_ptr<CIEC_ANY>> COPC_UA_ObjectStruct_Helper::initializeRDBuffer(CIEC_STRUCT &paStructType) {
+  std::vector<std::unique_ptr<CIEC_ANY>> RDBuffer;
+  for(size_t i = 0; i < paStructType.getStructSize(); i++) {
+    CIEC_ANY *member = paStructType.getMember(i);
+    if(member->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+      CIEC_STRUCT &memberStruct = static_cast<CIEC_STRUCT&>(member->unwrap());
+      std::vector<std::unique_ptr<CIEC_ANY>> memberRDBuffer = initializeRDBuffer(memberStruct);
+      RDBuffer.insert(
+        RDBuffer.end(), 
+        std::make_move_iterator(memberRDBuffer.begin()), 
+        std::make_move_iterator(memberRDBuffer.end()));
+    } else {
+      RDBuffer.emplace_back(member->clone(nullptr));
+    }
   }
   return RDBuffer;
 }
