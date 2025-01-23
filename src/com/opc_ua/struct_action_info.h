@@ -16,6 +16,7 @@
 #include "struct_member_action_info.h"
 #include "opcua_layer.h"
 #include "opcua_objectstruct_helper.h"
+#include "opcua_local_handler.h"
 
 class CStructActionInfo : public CStructMemberActionInfo {
   public:
@@ -30,6 +31,20 @@ class CStructActionInfo : public CStructMemberActionInfo {
 
     std::vector<std::shared_ptr<CActionInfo>> &getMemberActionInfos() {
       return mStructMemberActionInfos;
+    }
+
+    void uninitializeMemberActionInfos(CIEC_STRUCT &paStructType, COPC_UA_HandlerAbstract *paHandler) {
+      for(size_t i = 0; i < mStructMemberActionInfos.size(); i++) {
+        CIEC_ANY *member = paStructType.getMember(i);
+        if(member->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+          CStructActionInfo &structActionInfo = static_cast<CStructActionInfo&>(*mStructMemberActionInfos[i]);
+          CIEC_STRUCT &memberStruct = static_cast<CIEC_STRUCT&>(member->unwrap());
+          structActionInfo.uninitializeMemberActionInfos(memberStruct, paHandler);
+        } else {
+          std::shared_ptr<CActionInfo> actionInfo = mStructMemberActionInfos[i];
+          paHandler->uninitializeAction(*actionInfo);
+        }
+      }
     }
 
   private:

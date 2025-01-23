@@ -41,8 +41,19 @@ COPC_UA_ObjectStruct_Helper::~COPC_UA_ObjectStruct_Helper() {
 }
 
 void COPC_UA_ObjectStruct_Helper::uninitializeStruct() {
-  for(std::shared_ptr<CActionInfo> actionInfo : mStructMemberActionInfos) {
-    mHandler->uninitializeAction(*actionInfo);
+  CIEC_ANY** apoDataPorts = mLayer.getCommFB()->getComServiceType() == e_Publisher ? 
+    mLayer.getCommFB()->getSDs() : mLayer.getCommFB()->getRDs();
+  CIEC_STRUCT& structType = static_cast<CIEC_STRUCT&>(apoDataPorts[0]->unwrap());
+  for(size_t i = 0; i < mStructMemberActionInfos.size(); i++) {
+    std::shared_ptr<CActionInfo> actionInfo = mStructMemberActionInfos[i];
+    CIEC_ANY *member = structType.getMember(i);
+    if(member->getDataTypeID() == CIEC_ANY::e_STRUCT) {
+      CIEC_STRUCT &memberStruct = static_cast<CIEC_STRUCT&>(member->unwrap());
+      CStructActionInfo &structActionInfo = static_cast<CStructActionInfo&>(*actionInfo);
+      structActionInfo.uninitializeMemberActionInfos(memberStruct, mHandler);
+    } else {
+      mHandler->uninitializeAction(*actionInfo);
+    }
   }
   for(std::shared_ptr<CActionInfo> actionInfo : mStructObjectActionInfos) {
     mHandler->uninitializeAction(*actionInfo);
